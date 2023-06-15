@@ -98,7 +98,7 @@ module mkBLMacMSFP12_3#(Bit#(53) block1, Bit#(53) block2, Bit#(53) block3) (BLMa
 		Vector#(3,Vector#(3, MSFPTempFrac)) psum;
 		for ( Integer i = 0; i < 3; i=i+1 ) begin
 			pev[i].deq;
-			valid[i] <= 1;
+			psum[i] = pev[i].first;
 		end
 		
 		for ( Integer col = 0; col < 3; col = col + 1) begin
@@ -139,18 +139,8 @@ module mkBLMacMSFP12_3#(Bit#(53) block1, Bit#(53) block2, Bit#(53) block3) (BLMa
 	
 	method Action enq(Vector#(3,Vector#(3,Bit#(8))) pixels);
 		for (Integer i = 0; i < 3; i=i+1 ) begin
-				pev[i].enq(pixels[i].first);
-				pixels[i].deq;
+			pev[i].enq(pixels[i]);
 		end
-	endrule
-
-	method Action enq(Vector#(3,Vector#(3,Bit#(8))) _pixels);
-		pixels[0].enq(_pixels[0]);
-		pixels[1].enq(_pixels[1]);
-		pixels[2].enq(_pixels[2]);
-		// for (Integer i = 0; i < 3; i=i+1 ) begin
-		// 	pev[i].enq(pixels[i]);
-		// end
 	endmethod
 	method Vector#(3,BFloat16) first;
 		return sumQ.first;
@@ -167,7 +157,7 @@ interface BLMacMSFP12Ifc;
 endinterface
 module mkBLMacMSFP12#(Bit#(53) block, Integer channel) (BLMacMSFP12Ifc);
 
-	Int#(8) exponent = unpack(block[7:0]-126);
+	Int#(8) exponent = unpack(block[7:0]-127);
 	Vector#(3,Vector#(3,MSFP12Frac)) fracs = unpack(truncate(block>>8));
 	Int#(8) expi = 0; // 256 is 1 now
 
@@ -219,7 +209,7 @@ module mkBLMacMSFP12#(Bit#(53) block, Integer channel) (BLMacMSFP12Ifc);
 			end
 			psumQ.enq(tbf);
 		end else begin
-			valid[0].enq(0);
+			psumQ.enq(unpack(0));
 		end
 	endmethod
 	method Vector#(3,MSFPTempFrac) first;
